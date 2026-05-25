@@ -1,0 +1,178 @@
+{
+  "@@locale": "en",
+
+  "appName": "BaalShravya",
+  "tagline": "Early Hearing Screening",
+
+  "login": "Login",
+  "register": "Register",
+  "logout": "Logout",
+  "phone": "Phone Number",
+  "password": "Password",
+  "fullName": "Full Name",
+  "email": "Email (optional)",
+  "address": "Address",
+  "relationship": "Relationship to infant",
+  "welcomeBack": "Welcome back",
+  "newUser": "New user? Register here",
+  "alreadyHaveAccount": "Already have an account? Login",
+
+  "roleAnm": "ANM / Healthcare Worker",
+  "roleParent": "Parent / Guardian",
+  "roleAdmin": "Admin",
+  "selectRole": "Select your role",
+
+  "healthCenter": "Health Center",
+  "district": "District",
+  "employeeId": "Employee ID",
+  "selectDistrict": "Select district",
+  "selectHealthCenter": "Select health center",
+
+  "home": "Home",
+  "dashboard": "Dashboard",
+  "awareness": "Awareness",
+  "settings": "Settings",
+  "myInfants": "My Infants",
+
+  "goodMorning": "Good morning",
+  "goodAfternoon": "Good afternoon",
+  "goodEvening": "Good evening",
+  "welcome": "Welcome",
+
+  "totalScreenings": "Total Screenings",
+  "totalReferrals": "Referrals",
+  "totalPass": "Passed",
+  "inProgress": "In Progress",
+  "recentCases": "Recent Cases",
+  "myCases": "My Cases",
+
+  "newScreening": "New Screening",
+  "startScreening": "Start Screening",
+  "completeSession": "Complete Session",
+  "screeningSession": "Screening Session",
+  "sessionDashboard": "Session Dashboard",
+
+  "questionnaire": "Questionnaire",
+  "questionnaireTitle": "Hearing Risk Questionnaire",
+  "boaScreening": "BOA Screening",
+  "boaTitle": "Behavioral Observation Audiometry",
+
+  "pass": "PASS",
+  "refer": "REFER",
+  "ongoing": "IN PROGRESS",
+  "completed": "Completed",
+  "pending": "Pending",
+
+  "infantDetails": "Infant Details",
+  "infantName": "Infant Name",
+  "dateOfBirth": "Date of Birth",
+  "gender": "Gender",
+  "male": "Male",
+  "female": "Female",
+  "other": "Other",
+  "birthWeight": "Birth Weight (kg)",
+  "deliveryType": "Delivery Type",
+  "normal": "Normal",
+  "cesarean": "Cesarean",
+  "assisted": "Assisted",
+  "addInfant": "Add Infant",
+  "registerInfant": "Register Infant",
+
+  "parentDetails": "Parent Details",
+  "parentName": "Parent Name",
+  "mother": "Mother",
+  "father": "Father",
+  "guardian": "Guardian",
+
+  "playingSound": "Playing sound...",
+  "didInfantRespond": "Did infant respond?",
+  "yes": "YES",
+  "no": "NO",
+  "startle": "Startle",
+  "eyeBlink": "Eye Blink",
+  "headTurn": "Head Turn",
+  "arousal": "Arousal",
+  "noResponse": "No Response",
+  "stimulus": "Stimulus",
+  "ofLabel": "of",
+  "submitBoa": "Submit BOA Results",
+  "boaOutcome": "BOA Outcome",
+
+  "screeningReport": "Screening Report",
+  "downloadPdf": "Download PDF",
+  "sharePdf": "Share",
+  "printReport": "Print",
+  "referForOae": "Refer for OAE diagnosis",
+  "referForAabr": "Refer for AABR diagnosis",
+  "referralType": "Referral Type",
+  "referralNotes": "Referral Notes",
+
+  "language": "Language",
+  "selectLanguage": "Select Language",
+  "english": "English",
+  "kannada": "ಕನ್ನಡ",
+
+  "save": "Save",
+  "cancel": "Cancel",
+  "next": "Next",
+  "back": "Back",
+  "submit": "Submit",
+  "done": "Done",
+  "edit": "Edit",
+  "delete": "Delete",
+  "confirm": "Confirm",
+
+  "errorSomethingWentWrong": "Something went wrong. Please try again.",
+  "errorNoInternet": "No internet connection",
+  "errorSessionExpired": "Session expired. Please login again.",
+  "errorInvalidPhone": "Enter a valid 10-digit phone number",
+  "errorPasswordShort": "Password must be at least 6 characters",
+  "errorRequired": "This field is required",
+
+  "onboarding1Title": "Early Hearing Detection",
+  "onboarding1Desc": "Screen newborns for hearing loss in low-resource communities using just a smartphone.",
+  "onboarding2Title": "Risk Assessment",
+  "onboarding2Desc": "Answer a simple questionnaire to identify infants at risk of hearing loss.",
+  "onboarding3Title": "BOA Screening",
+  "onboarding3Desc": "Play calibrated sounds and observe infant responses to assess hearing.",
+  "getStarted": "Get Started",
+
+  "noInfantsYet": "No infants registered yet",
+  "noSessionsYet": "No screening sessions yet",
+  "noAwarenessContent": "No awareness content available",
+
+  "sessionStarted": "Screening session started",
+  "sessionCompleted": "Session completed successfully",
+  "questionnaireSubmitted": "Questionnaire submitted",
+  "boaSubmitted": "BOA results submitted",
+  "infantRegistered": "Infant registered successfully",
+
+  "anmOf": "ANM · {healthCenter}",
+  "@anmOf": {
+    "placeholders": {
+      "healthCenter": {"type": "String"}
+    }
+  },
+
+  "stimulusProgress": "Stimulus {current} of {total}",
+  "@stimulusProgress": {
+    "placeholders": {
+      "current": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+
+  "hz": "{value} Hz",
+  "@hz": {
+    "placeholders": {
+      "value": {"type": "int"}
+    }
+  },
+
+  "db": "{value} dB",
+  "@db": {
+    "placeholders": {
+      "value": {"type": "int"}
+    }
+  }
+}

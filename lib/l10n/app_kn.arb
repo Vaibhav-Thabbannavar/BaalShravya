@@ -1,0 +1,178 @@
+{
+  "@@locale": "kn",
+
+  "appName": "ಬಾಲಶ್ರಾವ್ಯ",
+  "tagline": "ಆರಂಭಿಕ ಶ್ರವಣ ಪರೀಕ್ಷೆ",
+
+  "login": "ಲಾಗಿನ್",
+  "register": "ನೋಂದಣಿ",
+  "logout": "ಲಾಗ್ ಔಟ್",
+  "phone": "ಫೋನ್ ನಂಬರ್",
+  "password": "ಪಾಸ್‌ವರ್ಡ್",
+  "fullName": "ಪೂರ್ಣ ಹೆಸರು",
+  "email": "ಇಮೇಲ್ (ಐಚ್ಛಿಕ)",
+  "address": "ವಿಳಾಸ",
+  "relationship": "ಶಿಶುವಿನೊಂದಿಗೆ ಸಂಬಂಧ",
+  "welcomeBack": "ಮತ್ತೆ ಸ್ವಾಗತ",
+  "newUser": "ಹೊಸ ಬಳಕೆದಾರರೇ? ಇಲ್ಲಿ ನೋಂದಾಯಿಸಿ",
+  "alreadyHaveAccount": "ಖಾತೆ ಇದೆಯೇ? ಲಾಗಿನ್ ಮಾಡಿ",
+
+  "roleAnm": "ಎಎನ್‌ಎಂ / ಆರೋಗ್ಯ ಕಾರ್ಯಕರ್ತ",
+  "roleParent": "ಪೋಷಕ / ಪಾಲಕ",
+  "roleAdmin": "ನಿರ್ವಾಹಕ",
+  "selectRole": "ನಿಮ್ಮ ಪಾತ್ರ ಆಯ್ಕೆಮಾಡಿ",
+
+  "healthCenter": "ಆರೋಗ್ಯ ಕೇಂದ್ರ",
+  "district": "ಜಿಲ್ಲೆ",
+  "employeeId": "ನೌಕರ ಐಡಿ",
+  "selectDistrict": "ಜಿಲ್ಲೆ ಆಯ್ಕೆಮಾಡಿ",
+  "selectHealthCenter": "ಆರೋಗ್ಯ ಕೇಂದ್ರ ಆಯ್ಕೆಮಾಡಿ",
+
+  "home": "ಮುಖಪುಟ",
+  "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+  "awareness": "ಜಾಗೃತಿ",
+  "settings": "ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+  "myInfants": "ನನ್ನ ಶಿಶುಗಳು",
+
+  "goodMorning": "ಶುಭ ಬೆಳಿಗ್ಗೆ",
+  "goodAfternoon": "ಶುಭ ಮಧ್ಯಾಹ್ನ",
+  "goodEvening": "ಶುಭ ಸಂಜೆ",
+  "welcome": "ಸ್ವಾಗತ",
+
+  "totalScreenings": "ಒಟ್ಟು ಪರೀಕ್ಷೆಗಳು",
+  "totalReferrals": "ರೆಫರಲ್‌ಗಳು",
+  "totalPass": "ಉತ್ತೀರ್ಣ",
+  "inProgress": "ಪ್ರಗತಿಯಲ್ಲಿದೆ",
+  "recentCases": "ಇತ್ತೀಚಿನ ಪ್ರಕರಣಗಳು",
+  "myCases": "ನನ್ನ ಪ್ರಕರಣಗಳು",
+
+  "newScreening": "ಹೊಸ ಪರೀಕ್ಷೆ",
+  "startScreening": "ಪರೀಕ್ಷೆ ಪ್ರಾರಂಭಿಸಿ",
+  "completeSession": "ಸೆಷನ್ ಪೂರ್ಣಗೊಳಿಸಿ",
+  "screeningSession": "ಪರೀಕ್ಷಾ ಸೆಷನ್",
+  "sessionDashboard": "ಸೆಷನ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+
+  "questionnaire": "ಪ್ರಶ್ನಾವಳಿ",
+  "questionnaireTitle": "ಶ್ರವಣ ಅಪಾಯ ಪ್ರಶ್ನಾವಳಿ",
+  "boaScreening": "ಬಿಒಎ ಪರೀಕ್ಷೆ",
+  "boaTitle": "ವರ್ತನೆ ಅವಲೋಕನ ಆಡಿಯೋಮೆಟ್ರಿ",
+
+  "pass": "ಉತ್ತೀರ್ಣ",
+  "refer": "ಉಲ್ಲೇಖಿಸಿ",
+  "ongoing": "ಪ್ರಗತಿಯಲ್ಲಿದೆ",
+  "completed": "ಪೂರ್ಣಗೊಂಡಿದೆ",
+  "pending": "ಬಾಕಿ ಇದೆ",
+
+  "infantDetails": "ಶಿಶುವಿನ ವಿವರಗಳು",
+  "infantName": "ಶಿಶುವಿನ ಹೆಸರು",
+  "dateOfBirth": "ಹುಟ್ಟಿದ ದಿನಾಂಕ",
+  "gender": "ಲಿಂಗ",
+  "male": "ಗಂಡು",
+  "female": "ಹೆಣ್ಣು",
+  "other": "ಇತರೆ",
+  "birthWeight": "ಜನನ ತೂಕ (ಕೆಜಿ)",
+  "deliveryType": "ಹೆರಿಗೆ ವಿಧ",
+  "normal": "ಸಾಮಾನ್ಯ",
+  "cesarean": "ಸಿಜೇರಿಯನ್",
+  "assisted": "ಸಹಾಯದೊಂದಿಗೆ",
+  "addInfant": "ಶಿಶು ಸೇರಿಸಿ",
+  "registerInfant": "ಶಿಶುವನ್ನು ನೋಂದಾಯಿಸಿ",
+
+  "parentDetails": "ಪೋಷಕರ ವಿವರಗಳು",
+  "parentName": "ಪೋಷಕರ ಹೆಸರು",
+  "mother": "ತಾಯಿ",
+  "father": "ತಂದೆ",
+  "guardian": "ಪಾಲಕ",
+
+  "playingSound": "ಶಬ್ದ ಪ್ರಸಾರವಾಗುತ್ತಿದೆ...",
+  "didInfantRespond": "ಶಿಶು ಪ್ರತಿಕ್ರಿಯಿಸಿದರೇ?",
+  "yes": "ಹೌದು",
+  "no": "ಇಲ್ಲ",
+  "startle": "ಬೆಚ್ಚಿಬಿದ್ದರು",
+  "eyeBlink": "ಕಣ್ಣು ಮಿಟುಕಿಸಿದರು",
+  "headTurn": "ತಲೆ ತಿರುಗಿಸಿದರು",
+  "arousal": "ಎಚ್ಚರಗೊಂಡರು",
+  "noResponse": "ಪ್ರತಿಕ್ರಿಯೆ ಇಲ್ಲ",
+  "stimulus": "ಪ್ರಚೋದನೆ",
+  "ofLabel": "ರಲ್ಲಿ",
+  "submitBoa": "ಬಿಒಎ ಫಲಿತಾಂಶ ಸಲ್ಲಿಸಿ",
+  "boaOutcome": "ಬಿಒಎ ಫಲಿತಾಂಶ",
+
+  "screeningReport": "ಪರೀಕ್ಷಾ ವರದಿ",
+  "downloadPdf": "ಪಿಡಿಎಫ್ ಡೌನ್‌ಲೋಡ್",
+  "sharePdf": "ಹಂಚಿಕೊಳ್ಳಿ",
+  "printReport": "ಮುದ್ರಿಸಿ",
+  "referForOae": "ಒಎಇ ರೋಗನಿರ್ಣಯಕ್ಕೆ ಕಳುಹಿಸಿ",
+  "referForAabr": "ಎಎಬಿಆರ್ ರೋಗನಿರ್ಣಯಕ್ಕೆ ಕಳುಹಿಸಿ",
+  "referralType": "ರೆಫರಲ್ ವಿಧ",
+  "referralNotes": "ರೆಫರಲ್ ಟಿಪ್ಪಣಿಗಳು",
+
+  "language": "ಭಾಷೆ",
+  "selectLanguage": "ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ",
+  "english": "English",
+  "kannada": "ಕನ್ನಡ",
+
+  "save": "ಉಳಿಸಿ",
+  "cancel": "ರದ್ದುಮಾಡಿ",
+  "next": "ಮುಂದೆ",
+  "back": "ಹಿಂದೆ",
+  "submit": "ಸಲ್ಲಿಸಿ",
+  "done": "ಮುಗಿಸಿ",
+  "edit": "ತಿದ್ದಿ",
+  "delete": "ಅಳಿಸಿ",
+  "confirm": "ದೃಢೀಕರಿಸಿ",
+
+  "errorSomethingWentWrong": "ಏನೋ ತಪ್ಪಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+  "errorNoInternet": "ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕವಿಲ್ಲ",
+  "errorSessionExpired": "ಸೆಷನ್ ಅವಧಿ ಮೀರಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಲಾಗಿನ್ ಮಾಡಿ.",
+  "errorInvalidPhone": "ಮಾನ್ಯವಾದ 10 ಅಂಕಿಯ ಫೋನ್ ನಂಬರ್ ನಮೂದಿಸಿ",
+  "errorPasswordShort": "ಪಾಸ್‌ವರ್ಡ್ ಕನಿಷ್ಠ 6 ಅಕ್ಷರಗಳಿರಬೇಕು",
+  "errorRequired": "ಈ ಕ್ಷೇತ್ರ ಅಗತ್ಯವಿದೆ",
+
+  "onboarding1Title": "ಆರಂಭಿಕ ಶ್ರವಣ ಪತ್ತೆ",
+  "onboarding1Desc": "ಕೇವಲ ಸ್ಮಾರ್ಟ್‌ಫೋನ್ ಬಳಸಿ ಕಡಿಮೆ ಸಂಪನ್ಮೂಲ ಸಮುದಾಯಗಳಲ್ಲಿ ನವಜಾತ ಶಿಶುಗಳ ಶ್ರವಣ ಪರೀಕ್ಷೆ ಮಾಡಿ.",
+  "onboarding2Title": "ಅಪಾಯ ಮೌಲ್ಯಮಾಪನ",
+  "onboarding2Desc": "ಶ್ರವಣ ನಷ್ಟದ ಅಪಾಯದಲ್ಲಿರುವ ಶಿಶುಗಳನ್ನು ಗುರುತಿಸಲು ಸರಳ ಪ್ರಶ್ನಾವಳಿಗೆ ಉತ್ತರಿಸಿ.",
+  "onboarding3Title": "ಬಿಒಎ ಪರೀಕ್ಷೆ",
+  "onboarding3Desc": "ಮಾಪನಾಂಕ ನಿರ್ಣಯಿಸಿದ ಶಬ್ದಗಳನ್ನು ಪ್ರಸಾರ ಮಾಡಿ ಮತ್ತು ಶ್ರವಣ ಮೌಲ್ಯಮಾಪನ ಮಾಡಲು ಶಿಶುವಿನ ಪ್ರತಿಕ್ರಿಯೆಗಳನ್ನು ಗಮನಿಸಿ.",
+  "getStarted": "ಪ್ರಾರಂಭಿಸಿ",
+
+  "noInfantsYet": "ಇನ್ನೂ ಯಾವುದೇ ಶಿಶು ನೋಂದಾಯಿಸಲಾಗಿಲ್ಲ",
+  "noSessionsYet": "ಇನ್ನೂ ಯಾವುದೇ ಪರೀಕ್ಷಾ ಸೆಷನ್ ಇಲ್ಲ",
+  "noAwarenessContent": "ಯಾವುದೇ ಜಾಗೃತಿ ವಿಷಯ ಲಭ್ಯವಿಲ್ಲ",
+
+  "sessionStarted": "ಪರೀಕ್ಷಾ ಸೆಷನ್ ಪ್ರಾರಂಭವಾಯಿತು",
+  "sessionCompleted": "ಸೆಷನ್ ಯಶಸ್ವಿಯಾಗಿ ಪೂರ್ಣಗೊಂಡಿದೆ",
+  "questionnaireSubmitted": "ಪ್ರಶ್ನಾವಳಿ ಸಲ್ಲಿಸಲಾಗಿದೆ",
+  "boaSubmitted": "ಬಿಒಎ ಫಲಿತಾಂಶಗಳನ್ನು ಸಲ್ಲಿಸಲಾಗಿದೆ",
+  "infantRegistered": "ಶಿಶು ಯಶಸ್ವಿಯಾಗಿ ನೋಂದಾಯಿಸಲಾಗಿದೆ",
+
+  "anmOf": "ಎಎನ್‌ಎಂ · {healthCenter}",
+  "@anmOf": {
+    "placeholders": {
+      "healthCenter": {"type": "String"}
+    }
+  },
+
+  "stimulusProgress": "ಪ್ರಚೋದನೆ {current} / {total}",
+  "@stimulusProgress": {
+    "placeholders": {
+      "current": {"type": "int"},
+      "total": {"type": "int"}
+    }
+  },
+
+  "hz": "{value} Hz",
+  "@hz": {
+    "placeholders": {
+      "value": {"type": "int"}
+    }
+  },
+
+  "db": "{value} dB",
+  "@db": {
+    "placeholders": {
+      "value": {"type": "int"}
+    }
+  }
+}
