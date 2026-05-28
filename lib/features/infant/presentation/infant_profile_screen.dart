@@ -28,7 +28,7 @@ class InfantProfileScreen extends ConsumerWidget {
 
             // app bar with infant name
             SliverAppBar(
-              expandedHeight: 180,
+              expandedHeight: 200,
               pinned: true,
               backgroundColor: AppColors.primary,
               leading: IconButton(
@@ -119,14 +119,13 @@ class InfantProfileScreen extends ConsumerWidget {
                     const SizedBox(height: 16),
 
                     // start screening button — only ANM sees this
-                    if (user?.role == 'anm') ...[
+                   if (user?.role == 'anm') ...[
                       SizedBox(
                         width: double.infinity,
                         height: 52,
                         child: ElevatedButton.icon(
-                          onPressed: () => context.push(
-                            '/start-session/${infant.id}',
-                          ),
+                          onPressed: () =>
+                              context.push('/start-session/${infant.id}'),
                           icon: const Icon(Icons.medical_services_outlined),
                           label: Text(l10n.startScreening),
                         ),

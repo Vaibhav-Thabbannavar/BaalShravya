@@ -10,8 +10,27 @@ class GeographyRemoteDatasource {
   Future<List<DistrictModel>> getDistricts() async {
     try {
       final response = await _dio.get(ApiEndpoints.districts);
-      final List data = response.data['data'];
-      return data.map((e) => DistrictModel.fromJson(e)).toList();
+
+      // print exact response to debug
+      print('RAW districts response type: ${response.data.runtimeType}');
+      print('RAW districts response: ${response.data}');
+
+      List<dynamic> list = [];
+
+      if (response.data is Map) {
+        // standard shape { success: true, data: [...] }
+        final data = response.data['data'];
+        if (data is List) {
+          list = data;
+        }
+      } else if (response.data is List) {
+        // direct array response
+        list = response.data;
+      }
+
+      return list
+          .map((e) => DistrictModel.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
     } on DioException catch (e) {
       throw handleDioError(e);
     }
@@ -22,8 +41,25 @@ class GeographyRemoteDatasource {
     try {
       final response =
           await _dio.get(ApiEndpoints.healthCenters(districtId));
-      final List data = response.data['data'];
-      return data.map((e) => HealthCenterModel.fromJson(e)).toList();
+
+      print('RAW health centers response type: ${response.data.runtimeType}');
+      print('RAW health centers response: ${response.data}');
+
+      List<dynamic> list = [];
+
+      if (response.data is Map) {
+        final data = response.data['data'];
+        if (data is List) {
+          list = data;
+        }
+      } else if (response.data is List) {
+        list = response.data;
+      }
+
+      return list
+          .map((e) =>
+              HealthCenterModel.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
     } on DioException catch (e) {
       throw handleDioError(e);
     }

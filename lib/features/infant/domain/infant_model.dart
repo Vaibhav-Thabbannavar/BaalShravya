@@ -1,49 +1,55 @@
 class InfantModel {
   final String id;
-  final String parentId;
+  final String? parentId;      // nullable — not always returned by API
   final String name;
   final String dateOfBirth;
   final String gender;
   final double? birthWeightKg;
   final String? deliveryType;
+  final String? parentName;    // add this — returned by some endpoints
+  final String? parentPhone;   // add this — returned by some endpoints
   final String? createdAt;
 
   const InfantModel({
     required this.id,
-    required this.parentId,
+    this.parentId,
     required this.name,
     required this.dateOfBirth,
     required this.gender,
     this.birthWeightKg,
     this.deliveryType,
+    this.parentName,
+    this.parentPhone,
     this.createdAt,
   });
 
   factory InfantModel.fromJson(Map<String, dynamic> json) {
     return InfantModel(
-      id: json['id'],
-      parentId: json['parent_id'],
-      name: json['name'],
-      // API returns date as "2024-06-15T00:00:00.000Z"
-      // we take only the date part
-      dateOfBirth: json['date_of_birth'].toString().split('T')[0],
-      gender: json['gender'],
+      id: json['id']?.toString() ?? '',
+      parentId: json['parent_id']?.toString(),
+      name: json['name']?.toString() ?? '',
+      dateOfBirth: json['date_of_birth']?.toString().split('T')[0] ?? '',
+      gender: json['gender']?.toString() ?? '',
       birthWeightKg: json['birth_weight_kg'] != null
-          ? double.parse(json['birth_weight_kg'].toString())
+          ? double.tryParse(json['birth_weight_kg'].toString())
           : null,
-      deliveryType: json['delivery_type'],
-      createdAt: json['created_at'],
+      deliveryType: json['delivery_type']?.toString(),
+      parentName: json['parent_name']?.toString(),
+      parentPhone: json['parent_phone']?.toString(),
+      createdAt: json['created_at']?.toString(),
     );
   }
 
-  // calculates age in months from date of birth
   int get ageInMonths {
-    final dob = DateTime.parse(dateOfBirth);
-    final now = DateTime.now();
-    return (now.year - dob.year) * 12 + (now.month - dob.month);
+    try {
+      final dob = DateTime.parse(dateOfBirth);
+      final now = DateTime.now();
+      return (now.year - dob.year) * 12 + (now.month - dob.month);
+    } catch (_) {
+      return 0;
+    }
   }
 
-  // formatted age string like "3 months" or "1 year 2 months"
   String get ageString {
     final months = ageInMonths;
     if (months < 12) return '$months month${months == 1 ? '' : 's'}';

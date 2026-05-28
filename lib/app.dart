@@ -15,6 +15,11 @@ import 'features/onboarding/presentation/onboarding_screen.dart';
 import 'features/infant/presentation/add_infant_screen.dart';
 import 'features/infant/presentation/infant_list_screen.dart';
 import 'features/infant/presentation/infant_profile_screen.dart';
+import 'features/screening/presentation/start_session_screen.dart';
+import 'features/screening/presentation/session_dashboard_screen.dart';
+import 'features/questionnaire/presentation/questionnaire_screen.dart';
+import 'features/boa/presentation/boa_screen.dart';
+import 'features/screening/presentation/report_screen.dart';
 
 class BaalShravyaApp extends ConsumerWidget {
   const BaalShravyaApp({super.key});
@@ -98,6 +103,39 @@ class BaalShravyaApp extends ConsumerWidget {
               infantId: state.pathParameters['infantId']!,
             ),
           ),
+
+          GoRoute(
+            path: '/start-session/:infantId',
+            builder: (context, state) =>
+                StartSessionScreen(infantId: state.pathParameters['infantId']!),
+          ),
+          GoRoute(
+            path: '/session/:sessionId',
+            builder: (context, state) => SessionDashboardScreen(
+              sessionId: state.pathParameters['sessionId']!,
+            ),
+          ),
+
+          GoRoute(
+            path: '/questionnaire/:sessionId',
+            builder: (context, state) => QuestionnaireScreen(
+              sessionId: state.pathParameters['sessionId']!,
+            ),
+          ),
+
+          GoRoute(
+            path: '/boa/:sessionId',
+            builder: (context, state) =>
+                BoaScreen(sessionId: state.pathParameters['sessionId']!),
+          ),
+
+          GoRoute(
+            path: '/report/:sessionId',
+            builder: (context, state) => ReportScreen(
+              sessionId: state.pathParameters['sessionId']!,
+            ),
+          ),
+
         ],
       ),
     );

@@ -11,11 +11,20 @@ class DistrictModel {
 
   factory DistrictModel.fromJson(Map<String, dynamic> json) {
     return DistrictModel(
-      id: json['id'],
-      name: json['name'],
-      state: json['state'],
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      state: json['state']?.toString() ?? '',
     );
   }
+
+  // needed for DropdownMenuItem value comparison
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DistrictModel && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
 
 class HealthCenterModel {
@@ -33,10 +42,18 @@ class HealthCenterModel {
 
   factory HealthCenterModel.fromJson(Map<String, dynamic> json) {
     return HealthCenterModel(
-      id: json['id'],
-      districtId: json['district_id'],
-      name: json['name'],
-      address: json['address'],
+      id: json['id']?.toString() ?? '',
+      districtId: json['district_id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      address: json['address']?.toString(),
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is HealthCenterModel && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }
