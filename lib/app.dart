@@ -3,15 +3,18 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:baalshravya_app/l10n/app_localizations.dart';
 import 'core/constants/app_routes.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/local_provider.dart';
 import 'features/auth/presentation/auth_provider.dart';
 import 'features/auth/presentation/login_screen.dart';
 import 'features/auth/presentation/register_screen.dart';
-import 'features/auth/presentation/home_screen.dart';
+import 'features/home/presentation/home_screen.dart';
 import 'features/onboarding/presentation/onboarding_screen.dart';
-import 'package:baalshravya_app/l10n/app_localizations.dart';
+import 'features/infant/presentation/add_infant_screen.dart';
+import 'features/infant/presentation/infant_list_screen.dart';
+import 'features/infant/presentation/infant_profile_screen.dart';
 
 class BaalShravyaApp extends ConsumerWidget {
   const BaalShravyaApp({super.key});
@@ -19,8 +22,6 @@ class BaalShravyaApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeProvider);
-
-    // watch auth state so router rebuilds when user logs in/out
     final authState = ref.watch(authProvider);
 
     return MaterialApp.router(
@@ -43,25 +44,20 @@ class BaalShravyaApp extends ConsumerWidget {
           final prefs = await SharedPreferences.getInstance();
           final onboardingSeen = prefs.getBool('onboarding_seen') ?? false;
 
-          // step 1 — onboarding check
           if (!onboardingSeen &&
               state.matchedLocation != AppRoutes.onboarding) {
             return AppRoutes.onboarding;
           }
 
-          // step 2 — auth check
-          // if user is logged in and tries to go to login/register
-          // redirect to home
           final isLoggedIn = authState.user != null;
-          final isAuthRoute = state.matchedLocation == AppRoutes.login ||
+          final isAuthRoute =
+              state.matchedLocation == AppRoutes.login ||
               state.matchedLocation == AppRoutes.register;
 
           if (isLoggedIn && isAuthRoute) return AppRoutes.home;
 
-          // step 3 — protected routes
-          // if user is not logged in and tries to go anywhere except
-          // login, register, onboarding — redirect to login
-          final isPublicRoute = isAuthRoute ||
+          final isPublicRoute =
+              isAuthRoute ||
               state.matchedLocation == AppRoutes.onboarding;
 
           if (!isLoggedIn && !isPublicRoute) return AppRoutes.login;
@@ -85,6 +81,22 @@ class BaalShravyaApp extends ConsumerWidget {
           GoRoute(
             path: AppRoutes.home,
             builder: (context, state) => const HomeScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.addInfant,
+            builder: (context, state) => const AddInfantScreen(),
+          ),
+          GoRoute(
+            path: '/infants',
+            builder: (context, state) => const InfantListScreen(),
+          ),
+          // :infantId is a path parameter
+          // state.pathParameters['infantId'] reads it
+          GoRoute(
+            path: '/infant/:infantId',
+            builder: (context, state) => InfantProfileScreen(
+              infantId: state.pathParameters['infantId']!,
+            ),
           ),
         ],
       ),

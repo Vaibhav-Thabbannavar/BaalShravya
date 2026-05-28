@@ -41,7 +41,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     if (success) {
       // navigate based on role
-      final user = ref.read(currentUserProvider);
       context.go(AppRoutes.home);
     } else {
       // show error snackbar
