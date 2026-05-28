@@ -57,6 +57,7 @@ dependencies:
 
   # share files
   share_plus: ^10.0.0
+  cross_file: ^0.3.2       # for XFile, used in sharing PDFs
 
   # image handling
   cached_network_image: ^3.3.1     # loads and caches images from URL
