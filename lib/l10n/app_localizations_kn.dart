@@ -344,6 +344,9 @@ class AppLocalizationsKn extends AppLocalizations {
   String get errorRequired => 'ಈ ಕ್ಷೇತ್ರ ಅಗತ್ಯವಿದೆ';
 
   @override
+  String get title => 'ಶೀರ್ಷಿಕೆ';
+
+  @override
   String get onboarding1Title => 'ಆರಂಭಿಕ ಶ್ರವಣ ಪತ್ತೆ';
 
   @override

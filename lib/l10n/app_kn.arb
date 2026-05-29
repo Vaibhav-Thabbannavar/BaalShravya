@@ -128,6 +128,10 @@
   "errorInvalidPhone": "ಮಾನ್ಯವಾದ 10 ಅಂಕಿಯ ಫೋನ್ ನಂಬರ್ ನಮೂದಿಸಿ",
   "errorPasswordShort": "ಪಾಸ್‌ವರ್ಡ್ ಕನಿಷ್ಠ 6 ಅಕ್ಷರಗಳಿರಬೇಕು",
   "errorRequired": "ಈ ಕ್ಷೇತ್ರ ಅಗತ್ಯವಿದೆ",
+  "title": "ಶೀರ್ಷಿಕೆ",
+  "@title": {
+    "description": "Label for the title input field"
+  },
 
   "onboarding1Title": "ಆರಂಭಿಕ ಶ್ರವಣ ಪತ್ತೆ",
   "onboarding1Desc": "ಕೇವಲ ಸ್ಮಾರ್ಟ್‌ಫೋನ್ ಬಳಸಿ ಕಡಿಮೆ ಸಂಪನ್ಮೂಲ ಸಮುದಾಯಗಳಲ್ಲಿ ನವಜಾತ ಶಿಶುಗಳ ಶ್ರವಣ ಪರೀಕ್ಷೆ ಮಾಡಿ.",

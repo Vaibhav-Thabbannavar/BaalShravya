@@ -764,6 +764,12 @@ abstract class AppLocalizations {
   /// **'This field is required'**
   String get errorRequired;
 
+  /// Label text for the title input field
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get title;
+
   /// No description provided for @onboarding1Title.
   ///
   /// In en, this message translates to:
