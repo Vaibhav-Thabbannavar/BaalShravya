@@ -1,21 +1,21 @@
+import 'dart:io';
+import 'dart:async';
+import 'package:camera/camera.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:baalshravya_app/l10n/app_localizations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../domain/boa_model.dart';
+import '../utils/tone_generator.dart';
 import 'boa_provider.dart';
 
-// the fixed stimulus sequence
-// 4 frequencies × 1 intensity level = 4 stimuli
 class _Stimulus {
   final int frequencyHz;
   final int intensityDb;
-
-  const _Stimulus({
-    required this.frequencyHz,
-    required this.intensityDb,
-  });
+  const _Stimulus({required this.frequencyHz, required this.intensityDb});
 }
 
 const List<_Stimulus> _stimulusSequence = [
@@ -23,14 +23,6 @@ const List<_Stimulus> _stimulusSequence = [
   _Stimulus(frequencyHz: 1000, intensityDb: 65),
   _Stimulus(frequencyHz: 2000, intensityDb: 65),
   _Stimulus(frequencyHz: 4000, intensityDb: 65),
-];
-
-const List<String> _responseTypes = [
-  'startle',
-  'eye_blink',
-  'head_turn',
-  'arousal',
-  'none',
 ];
 
 const Map<String, String> _responseTypeLabels = {
@@ -51,7 +43,6 @@ const Map<String, String> _responseTypeEmojis = {
 
 class BoaScreen extends ConsumerStatefulWidget {
   final String sessionId;
-
   const BoaScreen({super.key, required this.sessionId});
 
   @override
@@ -60,25 +51,35 @@ class BoaScreen extends ConsumerStatefulWidget {
 
 class _BoaScreenState extends ConsumerState<BoaScreen>
     with TickerProviderStateMixin {
-  // current stimulus index
-  int _currentIndex = 0;
+  // camera
+  CameraController? _cameraController;
+  List<CameraDescription> _cameras = [];
+  bool _cameraInitialized = false;
+  bool _isRecording = false;
 
-  // stored results for each stimulus
+  // audio
+  final AudioPlayer _audioPlayer = AudioPlayer();
+
+  // screening state
+  int _currentIndex = 0;
   final List<StimulusResultModel?> _results =
       List.filled(_stimulusSequence.length, null);
-
-  // current step — 'ready', 'playing', 'recording'
-  String _step = 'ready';
-
-  // selected response for current stimulus
+  String _step = 'ready'; // ready → playing → recording
   bool? _responseObserved;
   String? _responseType;
 
-  // animation controller for sound wave
+  // recorded video paths per stimulus
+  final List<String?> _videoClipPaths =
+      List.filled(_stimulusSequence.length, null);
+
+  // timer for 6 second playback
+  Timer? _playTimer;
+  int _secondsRemaining = 6;
+
+  // animation for sound wave
   late AnimationController _waveController;
   late Animation<double> _waveAnimation;
 
-  // notes controller
   final _notesController = TextEditingController();
 
   @override
@@ -86,30 +87,116 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
     super.initState();
     _waveController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 600),
     )..repeat(reverse: true);
-    _waveAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
+    _waveAnimation =
+        Tween<double>(begin: 0.85, end: 1.15).animate(
       CurvedAnimation(
-        parent: _waveController,
-        curve: Curves.easeInOut,
-      ),
+          parent: _waveController, curve: Curves.easeInOut),
     );
+    _initCamera();
   }
 
-  @override
-  void dispose() {
-    _waveController.dispose();
-    _notesController.dispose();
-    super.dispose();
+  Future<void> _initCamera() async {
+    try {
+      _cameras = await availableCameras();
+      if (_cameras.isEmpty) return;
+
+      // prefer front camera to see infant's face
+      // final frontCamera = _cameras.firstWhere(
+      //   (c) => c.lensDirection == CameraLensDirection.front,
+      //   orElse: () => _cameras.first,
+      // );
+
+      // _cameraController = CameraController(
+      //   frontCamera,
+      //   ResolutionPreset.medium,
+      //   enableAudio: true, // record audio with video
+      // );
+
+        final rareCamera = _cameras.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.back,
+        orElse: () => _cameras.first,
+      );
+
+      _cameraController = CameraController(
+        rareCamera,
+        ResolutionPreset.medium,
+        enableAudio: true, // record audio with video
+      );
+
+
+      await _cameraController!.initialize();
+
+      if (mounted) setState(() => _cameraInitialized = true);
+    } catch (e) {
+      debugPrint('Camera init error: $e');
+    }
   }
 
-  void _startPlaying() {
-    setState(() => _step = 'playing');
-    // simulate sound playing for 3 seconds
-    // in Phase 2 this will use audioplayers package
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) setState(() => _step = 'recording');
+  Future<void> _startPlaying() async {
+    setState(() {
+      _step = 'playing';
+      _secondsRemaining = 6;
     });
+
+    // start video recording for this stimulus
+    await _startRecording();
+
+    // generate and play the tone
+    final stimulus = _stimulusSequence[_currentIndex];
+    final toneBytes = ToneGenerator.generateTone(
+      frequencyHz: stimulus.frequencyHz,
+      durationSeconds: 6,
+    );
+
+    // play tone from bytes
+    await _audioPlayer.play(BytesSource(toneBytes));
+
+    // countdown timer — updates UI every second
+    _playTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(() => _secondsRemaining--);
+      if (_secondsRemaining <= 0) {
+        timer.cancel();
+        _onPlaybackFinished();
+      }
+    });
+  }
+
+  Future<void> _startRecording() async {
+    if (_cameraController == null ||
+        !_cameraInitialized ||
+        _isRecording) return;
+    try {
+      await _cameraController!.startVideoRecording();
+      setState(() => _isRecording = true);
+    } catch (e) {
+      debugPrint('Recording start error: $e');
+    }
+  }
+
+  Future<void> _stopRecording() async {
+    if (_cameraController == null || !_isRecording) return;
+    try {
+      final videoFile =
+          await _cameraController!.stopVideoRecording();
+      _videoClipPaths[_currentIndex] = videoFile.path;
+      setState(() => _isRecording = false);
+    } catch (e) {
+      debugPrint('Recording stop error: $e');
+    }
+  }
+
+  Future<void> _onPlaybackFinished() async {
+    await _audioPlayer.stop();
+    await _stopRecording();
+    if (mounted) {
+      setState(() => _step = 'recording');
+    }
   }
 
   void _recordResponse(bool observed) {
@@ -129,24 +216,23 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
 
     final stimulus = _stimulusSequence[_currentIndex];
 
-    // save result for this stimulus
     _results[_currentIndex] = StimulusResultModel(
       frequencyHz: stimulus.frequencyHz,
       intensityDb: stimulus.intensityDb,
       responseObserved: _responseObserved!,
       responseType: _responseType ?? 'none',
+      videoClipUrl: null, //Replaced _videoClipPaths[_currentIndex] to null for phase 1 since we are not uploading videos yet, will integrate in phase 2 with cloudinary
     );
 
     if (_currentIndex < _stimulusSequence.length - 1) {
-      // move to next stimulus
       setState(() {
         _currentIndex++;
         _step = 'ready';
         _responseObserved = null;
         _responseType = null;
+        _secondsRemaining = 6;
       });
     } else {
-      // all stimuli done — show summary
       setState(() => _step = 'summary');
     }
   }
@@ -154,6 +240,9 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
   Future<void> _submit() async {
     final validResults =
         _results.whereType<StimulusResultModel>().toList();
+
+    // upload video clips to Cloudinary here in Phase 2
+    // for now we just pass the local paths as notes
 
     final success = await ref
         .read(submitBoaProvider.notifier)
@@ -189,8 +278,7 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
       barrierDismissible: false,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+            borderRadius: BorderRadius.circular(20)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -204,10 +292,8 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
                 shape: BoxShape.circle,
               ),
               child: Center(
-                child: Text(
-                  isRefer ? '⚠️' : '✅',
-                  style: const TextStyle(fontSize: 36),
-                ),
+                child: Text(isRefer ? '⚠️' : '✅',
+                    style: const TextStyle(fontSize: 36)),
               ),
             ),
             const SizedBox(height: 16),
@@ -222,14 +308,13 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
             const SizedBox(height: 8),
             Text(
               isRefer
-                  ? 'No response observed to any stimulus.\nRefer for clinical diagnosis.'
+                  ? 'No response to sound stimuli.\nRefer for clinical diagnosis.'
                   : 'Infant responded to sound stimuli.',
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-                height: 1.5,
-              ),
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                  height: 1.5),
             ),
             const SizedBox(height: 20),
             SizedBox(
@@ -237,7 +322,7 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  context.pop(); // back to session dashboard
+                  context.pop();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
@@ -250,6 +335,16 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _playTimer?.cancel();
+    _waveController.dispose();
+    _notesController.dispose();
+    _audioPlayer.dispose();
+    _cameraController?.dispose();
+    super.dispose();
   }
 
   @override
@@ -270,9 +365,14 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
     final isRecording = _step == 'recording';
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text(l10n.boaTitle),
+        backgroundColor: Colors.black,
+        title: Text(
+          l10n.stimulusProgress(
+              _currentIndex + 1, _stimulusSequence.length),
+          style: const TextStyle(color: Colors.white),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.pop(),
@@ -281,299 +381,286 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
       body: Column(
         children: [
 
-          // progress indicator
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // camera feed — takes most of the screen
+          Expanded(
+            flex: 3,
+            child: Stack(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      l10n.stimulusProgress(
-                          _currentIndex + 1,
-                          _stimulusSequence.length),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
+                // camera preview
+                _cameraInitialized && _cameraController != null
+                    ? SizedBox.expand(
+                        child: CameraPreview(_cameraController!),
+                      )
+                    : Container(
+                        color: const Color(0xFF1A1A2E),
+                        child: const Center(
+                          child: Column(
+                            mainAxisAlignment:
+                                MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.videocam_outlined,
+                                  color: Colors.white38, size: 48),
+                              SizedBox(height: 8),
+                              Text(
+                                'Camera initializing...',
+                                style: TextStyle(
+                                    color: Colors.white38,
+                                    fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                // recording indicator — top right
+                if (_isRecording)
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.circle,
+                              color: Colors.white, size: 8),
+                          SizedBox(width: 4),
+                          Text(
+                            'REC',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Text(
-                      '${((_currentIndex + 1) / _stimulusSequence.length * 100).round()}%',
+                  ),
+
+                // stimulus info overlay — top left
+                Positioned(
+                  top: 16,
+                  left: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${stimulus.frequencyHz} Hz · ${stimulus.intensityDb} dB',
                       style: const TextStyle(
+                        color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
                       ),
                     ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+
+                // playing overlay — sound wave animation
+                if (isPlaying)
+                  Center(
+                    child: AnimatedBuilder(
+                      animation: _waveAnimation,
+                      builder: (context, child) => Transform.scale(
+                        scale: _waveAnimation.value,
+                        child: Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary
+                                .withOpacity(0.7),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Column(
+                            mainAxisAlignment:
+                                MainAxisAlignment.center,
+                            children: [
+                              const Text('🔊',
+                                  style:
+                                      TextStyle(fontSize: 32)),
+                              Text(
+                                '${_secondsRemaining}s',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // progress bar at bottom of camera
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
                   child: LinearProgressIndicator(
                     value: (_currentIndex + 1) /
                         _stimulusSequence.length,
-                    backgroundColor: AppColors.border,
+                    backgroundColor:
+                        Colors.white.withOpacity(0.2),
                     color: AppColors.primary,
-                    minHeight: 6,
+                    minHeight: 3,
                   ),
                 ),
               ],
             ),
           ),
 
+          // bottom panel — controls
           Expanded(
-            child: SingleChildScrollView(
+            flex: 2,
+            child: Container(
+              color: Colors.white,
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
 
-                  // stimulus info card
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: isPlaying
-                          ? AppColors.primarySurface
-                          : Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isPlaying
-                            ? AppColors.primary
-                            : AppColors.border,
-                        width: isPlaying ? 2 : 0.5,
+                  // ready state
+                  if (_step == 'ready') ...[
+                    Text(
+                      'Ready to play stimulus ${_currentIndex + 1}',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    child: Column(
-                      children: [
-
-                        // animated sound wave when playing
-                        AnimatedBuilder(
-                          animation: _waveAnimation,
-                          builder: (context, child) {
-                            return Transform.scale(
-                              scale: isPlaying
-                                  ? _waveAnimation.value
-                                  : 1.0,
-                              child: Container(
-                                width: 80,
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  color: isPlaying
-                                      ? AppColors.primary
-                                      : AppColors.primarySurface,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Center(
-                                  child: Text(
-                                    '🔊',
-                                    style:
-                                        TextStyle(fontSize: 36),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        Text(
-                          isPlaying
-                              ? l10n.playingSound
-                              : 'Ready to play',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: isPlaying
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        // frequency and intensity
-                        Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.center,
-                          children: [
-                            _StimTag(
-                                label: l10n.hz(stimulus.frequencyHz)),
-                            const SizedBox(width: 8),
-                            _StimTag(
-                                label: l10n.db(stimulus.intensityDb)),
-                          ],
-                        ),
-                      ],
+                    const SizedBox(height: 6),
+                    Text(
+                      'Place phone 30cm from infant. Ensure room is quiet.',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // camera feed placeholder
-                  // Phase 2 — replace with actual camera widget
-                  Container(
-                    height: 200,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1A1A2E),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Stack(
-                      children: [
-                        const Center(
-                          child: Column(
-                            mainAxisAlignment:
-                                MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.videocam_outlined,
-                                  color: Colors.white54, size: 40),
-                              SizedBox(height: 8),
-                              Text(
-                                'Camera feed\n(Phase 2)',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white38,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // recording indicator
-                        if (isPlaying || isRecording)
-                          Positioned(
-                            top: 10,
-                            right: 10,
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.red,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                const Text(
-                                  'REC',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // ready state — play button
-                  if (_step == 'ready')
+                    const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
-                      height: 52,
+                      height: 48,
                       child: ElevatedButton.icon(
                         onPressed: _startPlaying,
                         icon: const Icon(Icons.play_arrow_rounded,
-                            size: 24),
-                        label: const Text(
-                          'Play Sound',
-                          style: TextStyle(fontSize: 15),
+                            size: 22),
+                        label: Text(
+                          'Play ${stimulus.frequencyHz} Hz Sound',
+                          style: const TextStyle(fontSize: 14),
                         ),
                       ),
                     ),
+                  ],
 
-                  // playing state — waiting
-                  if (_step == 'playing')
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.primarySurface,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center,
-                        children: [
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            'Playing for 3 seconds...',
-                            style: const TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                  // playing state
+                  if (_step == 'playing') ...[
+                    Text(
+                      l10n.playingSound,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
                       ),
                     ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Watch the infant carefully...',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // countdown
+                    Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment.center,
+                      children: List.generate(6, (i) {
+                        final filled = i < (6 - _secondsRemaining);
+                        return Container(
+                          width: 32,
+                          height: 8,
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 2),
+                          decoration: BoxDecoration(
+                            color: filled
+                                ? AppColors.primary
+                                : AppColors.border,
+                            borderRadius:
+                                BorderRadius.circular(4),
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '$_secondsRemaining seconds remaining',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
 
-                  // recording state — record response
+                  // recording state — response input
                   if (_step == 'recording') ...[
                     Text(
                       l10n.didInfantRespond,
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
                       ),
                     ),
-
                     const SizedBox(height: 12),
-
                     Row(
                       children: [
                         Expanded(
                           child: GestureDetector(
                             onTap: () => _recordResponse(true),
                             child: AnimatedContainer(
-                              duration:
-                                  const Duration(milliseconds: 150),
+                              duration: const Duration(
+                                  milliseconds: 150),
                               padding: const EdgeInsets.symmetric(
-                                  vertical: 16),
+                                  vertical: 14),
                               decoration: BoxDecoration(
                                 color: _responseObserved == true
                                     ? AppColors.pass
                                     : Colors.white,
                                 borderRadius:
-                                    BorderRadius.circular(14),
+                                    BorderRadius.circular(12),
                                 border: Border.all(
                                   color: AppColors.pass,
-                                  width: _responseObserved == true
-                                      ? 2
-                                      : 1,
+                                  width:
+                                      _responseObserved == true
+                                          ? 2
+                                          : 1,
                                 ),
                               ),
                               child: Column(
                                 children: [
-                                  Text(
-                                    '👍',
-                                    style: const TextStyle(
-                                        fontSize: 28),
-                                  ),
-                                  const SizedBox(height: 4),
+                                  const Text('👍',
+                                      style: TextStyle(
+                                          fontSize: 24)),
                                   Text(
                                     l10n.yes,
                                     style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                      fontWeight:
+                                          FontWeight.w700,
                                       color:
-                                          _responseObserved == true
+                                          _responseObserved ==
+                                                  true
                                               ? Colors.white
                                               : AppColors.pass,
                                     ),
@@ -588,38 +675,38 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
                           child: GestureDetector(
                             onTap: () => _recordResponse(false),
                             child: AnimatedContainer(
-                              duration:
-                                  const Duration(milliseconds: 150),
+                              duration: const Duration(
+                                  milliseconds: 150),
                               padding: const EdgeInsets.symmetric(
-                                  vertical: 16),
+                                  vertical: 14),
                               decoration: BoxDecoration(
                                 color: _responseObserved == false
                                     ? AppColors.refer
                                     : Colors.white,
                                 borderRadius:
-                                    BorderRadius.circular(14),
+                                    BorderRadius.circular(12),
                                 border: Border.all(
                                   color: AppColors.refer,
-                                  width: _responseObserved == false
-                                      ? 2
-                                      : 1,
+                                  width:
+                                      _responseObserved == false
+                                          ? 2
+                                          : 1,
                                 ),
                               ),
                               child: Column(
                                 children: [
-                                  Text(
-                                    '👎',
-                                    style: const TextStyle(
-                                        fontSize: 28),
-                                  ),
-                                  const SizedBox(height: 4),
+                                  const Text('👎',
+                                      style: TextStyle(
+                                          fontSize: 24)),
                                   Text(
                                     l10n.no,
                                     style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                      fontWeight:
+                                          FontWeight.w700,
                                       color:
-                                          _responseObserved == false
+                                          _responseObserved ==
+                                                  false
                                               ? Colors.white
                                               : AppColors.refer,
                                     ),
@@ -632,92 +719,87 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
                       ],
                     ),
 
-                    // response type — only shown when YES
+                    // response type chips
                     if (_responseObserved == true) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        'What type of response?',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
                       const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _responseTypes
-                            .where((t) => t != 'none')
-                            .map((type) => GestureDetector(
-                                  onTap: () =>
-                                      _selectResponseType(type),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(
-                                        milliseconds: 150),
-                                    padding:
-                                        const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: _responseType == type
-                                          ? AppColors.primary
-                                          : Colors.white,
-                                      borderRadius:
-                                          BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: _responseType == type
-                                            ? AppColors.primary
-                                            : AppColors.border,
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: _responseTypeLabels.entries
+                              .where((e) => e.key != 'none')
+                              .map((e) => GestureDetector(
+                                    onTap: () =>
+                                        _selectResponseType(
+                                            e.key),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(
+                                          milliseconds: 150),
+                                      margin:
+                                          const EdgeInsets.only(
+                                              right: 8),
+                                      padding:
+                                          const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            _responseType == e.key
+                                                ? AppColors.primary
+                                                : Colors.white,
+                                        borderRadius:
+                                            BorderRadius.circular(
+                                                20),
+                                        border: Border.all(
+                                          color:
+                                              _responseType == e.key
+                                                  ? AppColors.primary
+                                                  : AppColors.border,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize:
+                                            MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            _responseTypeEmojis[
+                                                    e.key] ??
+                                                '',
+                                            style: const TextStyle(
+                                                fontSize: 14),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            e.value,
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color:
+                                                  _responseType ==
+                                                          e.key
+                                                      ? Colors.white
+                                                      : AppColors
+                                                          .textPrimary,
+                                              fontWeight:
+                                                  _responseType ==
+                                                          e.key
+                                                      ? FontWeight.w600
+                                                      : FontWeight
+                                                          .normal,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    child: Row(
-                                      mainAxisSize:
-                                          MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          _responseTypeEmojis[
-                                                  type] ??
-                                              '',
-                                          style: const TextStyle(
-                                              fontSize: 14),
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          _responseTypeLabels[
-                                                  type] ??
-                                              type,
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            color:
-                                                _responseType ==
-                                                        type
-                                                    ? Colors.white
-                                                    : AppColors
-                                                        .textPrimary,
-                                            fontWeight:
-                                                _responseType ==
-                                                        type
-                                                    ? FontWeight.w600
-                                                    : FontWeight
-                                                        .normal,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ))
-                            .toList(),
+                                  ))
+                              .toList(),
+                        ),
                       ),
                     ],
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
 
-                    // next button
                     SizedBox(
                       width: double.infinity,
-                      height: 52,
+                      height: 46,
                       child: ElevatedButton(
                         onPressed: (_responseObserved != null &&
                                 (_responseObserved == false ||
@@ -728,13 +810,12 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
                           _currentIndex < _stimulusSequence.length - 1
                               ? 'Next Stimulus →'
                               : 'View Summary',
-                          style: const TextStyle(fontSize: 15),
+                          style:
+                              const TextStyle(fontSize: 14),
                         ),
                       ),
                     ),
                   ],
-
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -746,7 +827,6 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
 
   Widget _buildSummaryScreen(
       AppLocalizations l10n, SubmitBoaState submitState) {
-    // calculate outcome locally for preview
     final anyResponse = _results
         .whereType<StimulusResultModel>()
         .any((r) => r.responseObserved);
@@ -767,7 +847,6 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
             // outcome preview
@@ -802,33 +881,42 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
                           : AppColors.refer,
                     ),
                   ),
-                  Text(
-                    previewOutcome == 'pass'
-                        ? 'Infant responded to sound stimuli'
-                        : 'No response — refer for diagnosis',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // video clips info
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primarySurface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                    color: AppColors.primary.withOpacity(0.2)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.videocam_outlined,
+                      color: AppColors.primary, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${_videoClipPaths.where((p) => p != null).length} video clip${_videoClipPaths.where((p) => p != null).length == 1 ? '' : 's'} recorded for ML training',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
-            // stimulus results table
-            const Text(
-              'Stimulus Results',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // results list
+            // stimulus results
             ...List.generate(_results.length, (i) {
               final result = _results[i];
               final stimulus = _stimulusSequence[i];
@@ -841,9 +929,7 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: AppColors.border,
-                    width: 0.5,
-                  ),
+                      color: AppColors.border, width: 0.5),
                 ),
                 child: Row(
                   children: [
@@ -859,7 +945,8 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
                       child: Center(
                         child: Text(
                           result.responseObserved ? '✅' : '❌',
-                          style: const TextStyle(fontSize: 18),
+                          style:
+                              const TextStyle(fontSize: 18),
                         ),
                       ),
                     ),
@@ -892,20 +979,23 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
                         ],
                       ),
                     ),
+                    // video clip indicator
+                    if (_videoClipPaths[i] != null)
+                      const Icon(Icons.videocam,
+                          color: AppColors.primary, size: 16),
                   ],
                 ),
               );
             }),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
 
-            // optional notes
             TextFormField(
               controller: _notesController,
               maxLines: 2,
               decoration: InputDecoration(
                 labelText: 'Notes (optional)',
-                hintText: 'e.g. infant was sleepy during testing',
+                hintText: 'e.g. infant was sleepy',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -932,7 +1022,6 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
               const SizedBox(height: 12),
             ],
 
-            // submit button
             SizedBox(
               width: double.infinity,
               height: 52,
@@ -950,41 +1039,14 @@ class _BoaScreenState extends ConsumerState<BoaScreen>
                       )
                     : Text(
                         l10n.submitBoa,
-                        style: const TextStyle(fontSize: 15),
+                        style:
+                            const TextStyle(fontSize: 15),
                       ),
               ),
             ),
 
             const SizedBox(height: 20),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StimTag extends StatelessWidget {
-  final String label;
-
-  const _StimTag({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.primarySurface,
-        borderRadius: BorderRadius.circular(8),
-        border:
-            Border.all(color: AppColors.primary.withOpacity(0.3)),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: AppColors.primary,
         ),
       ),
     );

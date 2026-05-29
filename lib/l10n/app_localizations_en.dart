@@ -343,6 +343,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorRequired => 'This field is required';
 
   @override
+  String get title => 'Title';
+
+  @override
   String get onboarding1Title => 'Early Hearing Detection';
 
   @override

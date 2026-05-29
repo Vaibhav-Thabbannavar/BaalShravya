@@ -122,12 +122,14 @@ class AppDrawer extends ConsumerWidget {
           const Divider(),
 
           // awareness
-          ListTile(
-            leading: const Icon(Icons.campaign_outlined,
-                color: AppColors.primary),
+         ListTile(
+            leading: const Icon(
+              Icons.campaign_outlined,
+              color: AppColors.primary,
+            ),
             title: Text(l10n.awareness),
             onTap: () {
-              Navigator.pop(context);
+              Navigator.pop(context); // close drawer first
               context.push(AppRoutes.awareness);
             },
           ),
